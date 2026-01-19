@@ -1,6 +1,6 @@
-
 import 'package:flutter/material.dart';
-import '../controllers/calculator_controller.dart';
+import 'package:calculatorrr/controllers/calculator_controller.dart';
+import 'package:calculatorrr/views/converter_screen.dart';
 
 class CalculatorView extends StatefulWidget {
   const CalculatorView({super.key});
@@ -15,6 +15,7 @@ class _CalculatorViewState extends State<CalculatorView> {
   String _selectedOp = '+';
   String? _resultText;
 
+  // Me loome kalkulaatori kontrolleri siin (MVC Controller)
   final _controller = CalculatorController();
 
   void _onCalculate() {
@@ -25,8 +26,7 @@ class _CalculatorViewState extends State<CalculatorView> {
         _selectedOp,
       );
       setState(() {
-        _resultText =
-            '${result.a} ${result.op} ${result.b} = ${result.result}';
+        _resultText = '${result.a} ${result.op} ${result.b} = ${result.result}';
       });
     } catch (e) {
       setState(() {
@@ -39,7 +39,8 @@ class _CalculatorViewState extends State<CalculatorView> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Flutter Calculator'),
+        title: const Text('Calculatorrr'),
+        centerTitle: true,
       ),
       body: Padding(
         padding: const EdgeInsets.all(16.0),
@@ -49,13 +50,13 @@ class _CalculatorViewState extends State<CalculatorView> {
             TextField(
               controller: _aController,
               decoration: const InputDecoration(labelText: 'First number (a)'),
-              keyboardType: const TextInputType.numberWithOptions(decimal: true, signed: true),
+              keyboardType: const TextInputType.numberWithOptions(decimal: true),
             ),
             const SizedBox(height: 12),
             TextField(
               controller: _bController,
               decoration: const InputDecoration(labelText: 'Second number (b)'),
-              keyboardType: const TextInputType.numberWithOptions(decimal: true, signed: true),
+              keyboardType: const TextInputType.numberWithOptions(decimal: true),
             ),
             const SizedBox(height: 12),
             Row(
@@ -80,14 +81,26 @@ class _CalculatorViewState extends State<CalculatorView> {
               ],
             ),
             const SizedBox(height: 24),
-            Card(
-              child: Padding(
-                padding: const EdgeInsets.all(16.0),
-                child: Text(
-                  _resultText ?? 'Result will appear here',
-                  style: const TextStyle(fontSize: 18),
-                ),
+            Text(
+              _resultText ?? 'Result will appear here',
+              style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+              textAlign: TextAlign.center,
+            ),
+            const Spacer(),
+            // NAVIGATSIOONINUPP TEISENDAJA JUURDE
+            ElevatedButton(
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.orange,
+                foregroundColor: Colors.white,
+                padding: const EdgeInsets.all(15),
               ),
+              onPressed: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (context) => const ConverterScreen()),
+                );
+              },
+              child: const Text('GO TO KM/MILES CONVERTER'),
             ),
           ],
         ),
