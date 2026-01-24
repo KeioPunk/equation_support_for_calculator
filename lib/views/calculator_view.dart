@@ -13,37 +13,36 @@ class CalculatorView extends StatefulWidget {
 }
 
 class _CalculatorViewState extends State<CalculatorView> {
-  final _aController = TextEditingController();
-  final _bController = TextEditingController();
-  String _selectedOp = '+';
+  // Meil on nüüd ainult ÜKS kontroller tekstikasti jaoks
+  final _equationController = TextEditingController();
   String? _resultText;
-
-  // Meie vana hea kalkulaatori kontroller
   final _controller = CalculatorController();
 
   void _onCalculate() {
+    if (_equationController.text.isEmpty) return;
+
     try {
-      // 1. Teeme arvutuse täpselt nii nagu enne
-      final result = _controller.calculateFromStrings(
-        _aController.text,
-        _bController.text,
-        _selectedOp,
-      );
+      // 1. Arvutame uue kontrolleri abil
+      final result = _controller.solveEquation(_equationController.text);
       
-      final calculationText = '${result.a} ${result.op} ${result.b} = ${result.result}';
+      // 2. Teeme vastuse ilusaks (et 8.0 asemel oleks 8)
+      String formattedResult = result.toStringAsFixed(result.truncateToDouble() == result ? 0 : 2);
       
-      // 2. Uuendame ekraani, et kasutaja näeks tulemust
+      // 3. Paneme kokku ajaloo rea (nt "5+6/2 = 8")
+      final fullHistoryLine = '${_equationController.text} = $formattedResult';
+      
       setState(() {
-        _resultText = calculationText;
+        _resultText = formattedResult;
       });
 
-      // 3. UUS: Salvestame selle sama tulemuse SQLite andmebaasi
-      context.read<HistoryController>().addEntry(calculationText);
+      // 4. SALVESTAME AJALUKKU (SQLite töötab taustal edasi!)
+      context.read<HistoryController>().addEntry(fullHistoryLine);
 
     } catch (e) {
-      setState(() {
-        _resultText = 'Error: $e';
-      });
+      setState(() => _resultText = 'Error');
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Matemaatika viga, brother!')),
+      );
     }
   }
 
@@ -51,9 +50,7 @@ class _CalculatorViewState extends State<CalculatorView> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Hulk Calculatorrrr'),
-        centerTitle: true,
-        // UUS: Lisasime siia ajaloo nupu
+        title: const Text('Equation Boss'),
         actions: [
           IconButton(
             icon: const Icon(Icons.history),
@@ -67,70 +64,35 @@ class _CalculatorViewState extends State<CalculatorView> {
       body: Padding(
         padding: const EdgeInsets.all(16.0),
         child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             TextField(
-              controller: _aController,
-              decoration: const InputDecoration(labelText: 'First number (a)'),
-              keyboardType: const TextInputType.numberWithOptions(decimal: true),
-            ),
-            const SizedBox(height: 12),
-            TextField(
-              controller: _bController,
-              decoration: const InputDecoration(labelText: 'Second number (b)'),
-              keyboardType: const TextInputType.numberWithOptions(decimal: true),
-            ),
-            const SizedBox(height: 12),
-            Row(
-              children: [
-                const Text('Operator:'),
-                const SizedBox(width: 12),
-                DropdownButton<String>(
-                  value: _selectedOp,
-                  onChanged: (v) {
-                    if (v == null) return;
-                    setState(() => _selectedOp = v);
-                  },
-                  items: const [
-                    DropdownMenuItem(value: '+', child: Text('+')),
-                    DropdownMenuItem(value: '-', child: Text('-')),
-                    DropdownMenuItem(value: '*', child: Text('*')),
-                    DropdownMenuItem(value: '/', child: Text('/')),
-                  ],
-                ),
-                const Spacer(),
-                ElevatedButton(onPressed: _onCalculate, child: const Text('CALCULATE')),
-              ],
-            ),
-            const SizedBox(height: 24),
-            // See on sinu tulemuse kuvamise kast (jäi samaks, lisasime vaid taustavärvi)
-            Container(
-              padding: const EdgeInsets.all(16),
-              decoration: BoxDecoration(
-                color: Colors.blue.shade50, 
-                borderRadius: BorderRadius.circular(8)
+              controller: _equationController,
+              decoration: const InputDecoration(
+                labelText: 'Sisesta tehe (nt 5+6/2)',
+                border: OutlineInputBorder(),
               ),
-              child: Text(
-                _resultText ?? 'Result will appear here',
-                style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-                textAlign: TextAlign.center,
-              ),
+              keyboardType: TextInputType.text,
+              style: const TextStyle(fontSize: 22),
+            ),
+            const SizedBox(height: 20),
+            ElevatedButton(
+              onPressed: _onCalculate,
+              style: ElevatedButton.styleFrom(minimumSize: const Size.fromHeight(50)),
+              child: const Text('CALCULATE'),
+            ),
+            const SizedBox(height: 40),
+            Text(
+              _resultText ?? '0',
+              style: const TextStyle(fontSize: 48, fontWeight: FontWeight.bold),
             ),
             const Spacer(),
-            // SINU VANA NAVIGATSIOONINUPP (jääb täpselt samaks!)
             ElevatedButton(
-              style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.orange,
-                foregroundColor: Colors.white,
-                padding: const EdgeInsets.all(15),
+              style: ElevatedButton.styleFrom(backgroundColor: Colors.orange),
+              onPressed: () => Navigator.push(
+                context,
+                MaterialPageRoute(builder: (context) => const ConverterScreen()),
               ),
-              onPressed: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(builder: (context) => const ConverterScreen()),
-                );
-              },
-              child: const Text('GO TO KM/MILES CONVERTER'),
+              child: const Text('GO TO CONVERTER', style: TextStyle(color: Colors.white)),
             ),
           ],
         ),

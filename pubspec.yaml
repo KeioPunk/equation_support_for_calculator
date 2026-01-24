@@ -12,6 +12,7 @@ dependencies:
   provider: ^6.1.1
   sqflite: ^2.3.0
   path: ^1.9.0
+  math_expressions: ^2.5.0  # SEE ON SEE UUS MOOTOR!
   cupertino_icons: ^1.0.2
 
 dev_dependencies:
