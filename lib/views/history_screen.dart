@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:provider/provider.dart';
 import 'package:calculatorrr/controllers/history_controller.dart';
 
@@ -7,38 +8,35 @@ class HistoryScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // Laeme andmed andmebaasist sisse niipea kui ekraan avaneb
-    context.read<HistoryController>().loadHistory();
-
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Calculation History'),
-        backgroundColor: Colors.blueGrey,
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.delete_forever),
-            onPressed: () => context.read<HistoryController>().clearHistory(),
-            tooltip: 'Clear History',
-          ),
-        ],
+        title: const Text('Hulk Cloud History'),
+        backgroundColor: Colors.orange,
       ),
-      body: Consumer<HistoryController>(
-        builder: (context, controller, child) {
-          if (controller.history.isEmpty) {
-            return const Center(child: Text('No history yet, brother! Arvuta midagi kõigepealt!'));
+      body: StreamBuilder<QuerySnapshot>(
+        stream: context.read<HistoryController>().historyStream,
+        builder: (context, snapshot) {
+          if (snapshot.hasError) {
+            return const Center(child: Text('Viga pilvest laadimisel!'));
           }
+          
+          if (snapshot.connectionState == ConnectionState.waiting) {
+            return const Center(child: CircularProgressIndicator());
+          }
+
+          final docs = snapshot.data?.docs ?? [];
+          if (docs.isEmpty) {
+            return const Center(child: Text('Pilv on tühi, brother! Tee mõni arvutus.'));
+          }
+
           return ListView.builder(
-            itemCount: controller.history.length,
+            itemCount: docs.length,
             itemBuilder: (context, index) {
-              final item = controller.history[index];
+              final data = docs[index].data() as Map<String, dynamic>;
               return ListTile(
-                leading: const Icon(Icons.history),
-                title: Text(
-                  item['calculation'], 
-                  style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold)
-                ),
-                subtitle: Text('Aeg: ${item['timestamp']}'),
-                isThreeLine: true,
+                leading: const Icon(Icons.cloud_done, color: Colors.orange),
+                title: Text(data['calculation'] ?? ""),
+                subtitle: const Text("Salvestatud pilve"),
               );
             },
           );
